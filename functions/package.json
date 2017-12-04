@@ -9,8 +9,13 @@
     "logs": "firebase functions:log"
   },
   "dependencies": {
+    "dialogflow": "^0.1.0",
+    "express": "^4.16.2",
     "firebase-admin": "~5.4.2",
     "firebase-functions": "^0.7.1"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "firebase-admin": "^5.4.3"
+  }
 }
