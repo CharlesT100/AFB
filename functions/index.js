@@ -51,8 +51,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((req, res) => 
 
         'add.chatbotIntent': () => {
 
-            // const question = parameters['question'];
-            // const answer = parameters['answer'];
+            const question = parameters['question'];
+            const answer = parameters['answer'];
             // const example = parameters['code-example'];
 
             //Make call to DialogFlow SDK
@@ -63,7 +63,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((req, res) => 
 
                 const question = parameters['question'];
                 const answer = parameters['answer'];
-                const example = parameters['code-example'];
+                
                 
                  // Instantiates clients
                  const contextsClient = new dialogflow.ContextsClient();
@@ -110,7 +110,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((req, res) => 
                     });
             }
             //Send response to Dialog Flow
-            const afbMessage = formatResponse('This message via Cloud Function and the add.chatbotIntent action');
+            const afbMessage = formatResponse('This message via Cloud Function and the add.chatbotIntent action, the question was:' + question);
             console.log(afbMessage);
             res.json(afbMessage)
 
