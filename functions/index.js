@@ -9,6 +9,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((req, res) => 
     console.log('Request headers: ' + JSON.stringify(req.headers));
     console.log('Request body: ' + JSON.stringify(req.body));
 
+    
     let action = req.body.queryResult.action; 
     const parameters = req.body.queryResult.parameters; 
     const inputContexts = req.body.queryResult.contexts;
@@ -34,9 +35,87 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((req, res) => 
             const question = parameters['question'];
             const answer = parameters['answer'];
 
-            // createIntents();
-
             userRef.update({ myquestion: question, myanswer: answer}).then(() =>{   
+                
+            function createIntents(question, answer){  
+                
+                const dialogflow = require('dialogflow');
+                const projectId = 'afb-crucqn';
+            
+                const contextsClient = new dialogflow.ContextsClient();
+                const intentsClient = new dialogflow.IntentsClient();
+                const agentPath = intentsClient.projectAgentPath(projectId);
+
+                // Set the question variable to be 'user says' within df intent
+                const afbPhrases = [
+                    {type: 'TYPE_EXAMPLE', parts: [{text: question }]},
+                ];
+
+                // Setup Param
+                const afbParameters = [
+                    {
+                        displayName: 'question',
+                        value: question,
+                        entityTypeDisplayName: '@sys.text',
+                    },
+                    {
+                        displayName: 'answer',
+                        value: answer,
+                        entityTypeDisplayName: '@sys.text',
+                        isList: false,
+                    },
+                ];
+
+                const afbResult = {
+                    action: 'afb_dummy_action',
+                    parameters: afbParameters,
+                    messages: [
+                        {
+                        text: {
+                            text: [
+                            'We added the question: $question with the answer of: $answer.',
+                            ],
+                        },
+                        },
+                    ],
+                    // Conclude the conversation by setting no output contexts and setting
+                    // resetContexts to true. This clears all existing contexts.
+                    outputContexts: [],
+                    resetContexts: true,
+                };
+            
+                // Setup the intent
+                const afbIntent = {
+                    displayName: 'Dummy Intent',
+                    events: ['dummy_event'],
+                    // Webhook is disabled because we are not ready to call the webhook yet.
+                    webhookState: 'WEBHOOK_STATE_DISABLED',
+                    trainingPhrases: afbPhrases,
+                    mlEnabled: true,
+                    priority: 500000,
+                    result: afbResult,
+                };                                
+                            
+                // Associate intent to the parent/agentPath, passed into createIntent fn
+                const afbRequest = {
+                    parent: agentPath,
+                    intent: afbIntent,
+                };
+                
+                // Create the intent
+                intentsClient
+                .createIntent(afbRequest)
+                    .then(responses => {
+                        console.log('Created A New Intent:');
+                        // logIntent(responses[0]);
+                        console.log(responses[0]);
+                    }) 
+                    .catch(err => {
+                        console.error('ERROR:', err);
+                    });
+            } // end of creareIntents fn
+            
+                return createIntents();
                 const afbMessage = formatResponse('This message via Cloud Function and the add.chatbotIntent action, the question was:');
                 res.json(afbMessage)
             })
@@ -63,82 +142,5 @@ function formatResponse(text) { // Helper to format the response JSON object
     }
 }
 
-function createIntents(){  
-
-    const dialogFlow = require('dialogflow');
-    const projectId = 'afb-crucqn';
-    
-    const agentPath = intentsClient.projectAgentPath(projectId);
-    const contextsClient = new dialogflow.ContextsClient();
-    const intentsClient = new dialogflow.IntentsClient();
-
-    // Setup the intent
-    const afbIntent = {
-        displayName: 'Dummy Intent',
-        events: ['dummy_event'],
-        // Webhook is disabled because we are not ready to call the webhook yet.
-        webhookState: 'WEBHOOK_STATE_DISABLED',
-        trainingPhrases: afbPhrases,
-        mlEnabled: true,
-        priority: 500000,
-        result: afbResult,
-    };
-
-    // Set the question variable to be 'user says' within df intent
-    const afbPhrases = [
-        {type: 'TYPE_EXAMPLE', parts: [{text: question }]},
-    ];
-
-    const afbResult = {
-        action: 'afb_dummy_action',
-        parameters: afbParameters,
-        messages: [
-            {
-            text: {
-                text: [
-                'We added the question: $question with the answer of: $answer.',
-                ],
-            },
-            },
-        ],
-        // Conclude the conversation by setting no output contexts and setting
-        // resetContexts to true. This clears all existing contexts.
-        outputContexts: [],
-        resetContexts: true,
-    };
-    
-    // Setup Param
-    const afbParameters = [
-        {
-            displayName: 'question',
-            value: question,
-            entityTypeDisplayName: '@sys.text',
-        },
-        {
-            displayName: 'answer',
-            value: answer,
-            entityTypeDisplayName: '@sys.text',
-            isList: false,
-        },
-    ];
-    
-
-    // Associate intent to the parent/agentPath, passed into createIntent fn
-    const afbRequest = {
-      parent: agentPath,
-      intent: afbIntent,
-    };
-    
-    // Create the intent
-    intentsClient
-    .createIntent(afbRequest)
-    .then(responses => {
-        console.log('Created A New Intent:');
-        logIntent(responses[0]);
-    }) 
-    .catch(err => {
-        console.error('ERROR:', err);
-    });
-}
 
 
