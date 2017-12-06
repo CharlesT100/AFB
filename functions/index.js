@@ -107,8 +107,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((req, res) => 
                 .createIntent(afbRequest)
                     .then(responses => {
                         console.log('Created A New Intent:');
-                        // logIntent(responses[0]);
-                        console.log(responses[0]);
+                        logIntent(responses[0]);
+                        //console.log(responses);
                     }) 
                     .catch(err => {
                         console.error('ERROR:', err);
