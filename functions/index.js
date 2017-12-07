@@ -9,7 +9,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((req, res) => 
     console.log('Request headers: ' + JSON.stringify(req.headers));
     console.log('Request body: ' + JSON.stringify(req.body));
 
-    
+    const dialogflow = require('dialogflow');
     let action = req.body.queryResult.action; 
     const parameters = req.body.queryResult.parameters; 
     const inputContexts = req.body.queryResult.contexts;
@@ -37,9 +37,9 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((req, res) => 
 
             userRef.update({ myquestion: question, myanswer: answer}).then(() =>{   
                 
-            function createIntents(question, answer){  
+            function createIntents(){  
                 
-                const dialogflow = require('dialogflow');
+                
                 const projectId = 'afb-crucqn';
             
                 const contextsClient = new dialogflow.ContextsClient();
@@ -108,14 +108,14 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((req, res) => 
                     .then(responses => {
                         console.log('Created A New Intent:');
                         logIntent(responses[0]);
-                        //console.log(responses);
+                        console.log(responses);
                     }) 
                     .catch(err => {
                         console.error('ERROR:', err);
                     });
             } // end of creareIntents fn
             
-                return createIntents();
+                return createIntents(question, answer);
                 const afbMessage = formatResponse('This message via Cloud Function and the add.chatbotIntent action, the question was:');
                 res.json(afbMessage)
             })
@@ -141,6 +141,47 @@ function formatResponse(text) { // Helper to format the response JSON object
         // followupEvent: {}
     }
 }
+
+function logIntent(intent) {
+    // Imports the Dialogflow library
+    const dialogflow = require('dialogflow');
+  
+    // Instantiates clients
+    const contextsClient = new dialogflow.ContextsClient();
+    const intentsClient = new dialogflow.IntentsClient();
+  
+    console.log(`  ID:`, intentsClient.matchIntentFromIntentName(intent.name));
+    console.log(`  Display Name: ${intent.displayName}`);
+    const outputContexts = intent.outputContexts
+      .map(context => {
+        return contextsClient.matchContextFromContextName(context.name);
+      })
+      .join(', ');
+    console.log(`  Priority: ${intent.priority}`);
+    console.log(`  Output contexts: ${outputContexts}`);
+  
+    console.log(`  Action: ${intent.action}`);
+    console.log(`  Parameters:`);
+    intent.parameters.forEach(parameter => {
+      console.log(
+        `    ${parameter.displayName}: ${parameter.entityTypeDisplayName}`
+      );
+    });
+  
+    console.log(`  Responses:`);
+    intent.messages.forEach(message => {
+      const messageContent = JSON.stringify(message[message.message]);
+      console.log(
+        `    (${message.platform}) ${message.message}: ${messageContent}`
+      );
+    });
+  
+    const defaultResponsePlatforms = intent.defaultResponsePlatforms.join(', ');
+    console.log(
+      `  Platforms using default responses: ${defaultResponsePlatforms}`
+    );
+    console.log('');
+  }
 
 
 
